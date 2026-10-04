@@ -1,0 +1,14 @@
+# FolderDrawer — 运行产物与构建输出
+# 脚本 / exe 运行时会在同目录生成这几个文件，不要提交
+
+trace.txt
+error.log
+desktopinfo.txt
+
+# 编译输出：FolderDrawer.exe 请通过 GitHub Releases 分发，不放进源码仓库
+dist/
+
+# 开发期截图：这些是区域/全屏截图，会拍到自己桌面的内容（文件名、壁纸、其它窗口），
+# 不要提交。README 用的展示图是 assets/preview.png —— 它由 dev\demodata 的测试数据生成，
+# 背景是纯色，不含任何真实桌面内容。
+dev/shots/
