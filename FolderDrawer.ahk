@@ -553,12 +553,15 @@ class Peek {
             img := this.IconOf(it)
             if img
                 GpIcon(gp, img, S(16), by + (b.h - S(CFG.IconSize)) / 2, S(CFG.IconSize))
-            GpText(gp, it.name, S(46), by, w - S(120), b.h, 9.2, it.isDir ? THEME.FG : THEME.FG2, false, 0, 1)
+            ; 名称与右侧副标题“分栏”，彼此留出间隙：
+            ; 文件夹右侧是“n 项 ›”，文件右侧是更宽的“类型 · 大小”；超长名字靠省略号收尾
             if it.isDir {
+                GpText(gp, it.name, S(46), by, w - S(126), b.h, 9.2, THEME.FG, false, 0, 1)
                 GpText(gp, it.sub, w - S(68), by, S(38), b.h, 7.8, THEME.SUB, false, 2, 1)
                 GpText(gp, "›", w - S(32), by - S(1), S(16), b.h, 11, THEME.SUB, false, 1, 1)
             } else {
-                GpText(gp, it.sub, w - S(140), by, S(124), b.h, 7.8, THEME.SUB, false, 2, 1)
+                GpText(gp, it.name, S(46), by, w - S(182), b.h, 9.2, THEME.FG2, false, 0, 1)
+                GpText(gp, it.sub, w - S(110), by, S(94), b.h, 7.8, THEME.SUB, false, 2, 1)
             }
         }
         GpUnclip(gp)
@@ -623,8 +626,11 @@ class Peek {
     HitRow(mx, my) {
         if (mx < this.x || mx >= this.x + this.w)
             return -1
-        ly := my - (this.y + this.headH) + this.scrollY
-        if (ly < 0 || ly > this.viewH)
+        ly := my - (this.y + this.headH) + this.scrollY     ; ly 是“内容坐标”
+        ; 可见范围是 ly ∈ [scrollY, scrollY + viewH]。
+        ; 原来写成 [0, viewH]：一旦滚动过，ly 就大于 viewH，整块内容都判定为不可见，
+        ; 于是滚出来的那些行点不动、也悬不停（内容多的文件夹必现）。
+        if (ly < this.scrollY || ly > this.scrollY + this.viewH)
             return -1
         for b in this.blocks {
             if (b.kind != "row")
@@ -1088,6 +1094,8 @@ GpText(gp, text, x, y, w, h, pt, argb, bold := false, align := 0, lineAlign := 1
     DllCall("gdiplus\GdipCreateStringFormat", "int", 0x1000, "int", 0, "ptr*", &fmt := 0)  ; NoWrap
     DllCall("gdiplus\GdipSetStringFormatAlign", "ptr", fmt, "int", align)
     DllCall("gdiplus\GdipSetStringFormatLineAlign", "ptr", fmt, "int", lineAlign)
+    ; 超出矩形时用省略号收尾：GDI+ 的 DrawString 默认不做裁剪，会直接画到矩形外面去
+    DllCall("gdiplus\GdipSetStringFormatTrimming", "ptr", fmt, "int", 3)   ; StringTrimmingEllipsisCharacter
     rc := Buffer(16, 0)
     NumPut("float", x, rc, 0), NumPut("float", y, rc, 4), NumPut("float", w, rc, 8), NumPut("float", h, rc, 12)
     DllCall("gdiplus\GdipDrawString", "ptr", gp, "str", text, "int", -1, "ptr", font, "ptr", rc, "ptr", fmt, "ptr", b)
@@ -1468,6 +1476,8 @@ DebugOpen(mx, my, path) {
     global g
     if !FileExist(path)
         path := A_Desktop
+    ; 先清掉已有面板：否则下面直接覆盖 g.popups，旧面板会失去管理、窗口永远挂在桌面上
+    CloseAll(false, false)
     p := Peek(1, path, {left: mx - 40, top: my - 40, right: mx, bottom: my}, "")
     g.popups := [p]
     g.rootIdx := -99

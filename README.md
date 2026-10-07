@@ -210,6 +210,9 @@ FolderDrawer.ahk -test x y 路径    # 在指定位置弹出面板并冻结（�
 | 文件夹不显示 | `Loop Files` 不带模式只列文件 | 显式 `"DF"` |
 | 弹窗有黑色投影 | DWM 默认阴影 | 保持分层窗口（`WinSetTransparent 255`） |
 | 脚本卡死无响应 | 警告/错误弹窗阻塞常驻工具 | `#Warn All, Off` + `OnError` 写日志 |
+| 内容多的文件夹：滚出来的行点不动、也悬不停 | `HitRow()` 拿**内容坐标** `ly` 去和视口高度比（`ly ∈ [0, viewH]`）；一旦滚动过，`ly` 恒大于 `viewH`，整块内容都被判成不可见 | 可见范围改成内容坐标系里的窗口：`ly ∈ [scrollY, scrollY + viewH]`（`scrollY = 0` 时与原逻辑等价） |
+| 长文件名压到右侧副标题上 | GDI+ 的 `DrawString` **不做裁剪**（`NoWrap` 只禁换行），超出矩形也照画；而且名字矩形与副标题矩形本来就重叠 66px | 打开 `StringTrimmingEllipsisCharacter`（超长自动收 `…`）+ 名字与副标题**分栏**、留 10px 以上间隙 |
+| 桌面上挂着一个关不掉的面板 | `DebugOpen()`（`Ctrl+Alt+D`）直接 `g.popups := [p]` 覆盖数组，旧面板从此没人管 | 覆盖前先 `CloseAll(false, false)` |
 
 **6. 已实测通过**：悬停展开 ✓ 级联子面板 ✓ 行高亮 ✓ 单击打开 ✓ 右键菜单 ✓
 移开自动关闭 ✓ Esc 关闭 ✓ 大文件夹限高滚动 ✓ 图标/类型/大小显示 ✓ 深浅色主题 ✓
